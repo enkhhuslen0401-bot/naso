@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Биологийн олон янз байдал</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts for Mongolian Text -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Noto+Sans+Mongolian&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Open Sans', 'Noto Sans Mongolian', sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      touch-action: manipulation;
+    }
+    h1, h2, h3, .heading-font {
+      font-family: 'Montserrat', 'Noto Sans Mongolian', sans-serif;
+    }
+    .slide-card {
+      transition: all 0.25s ease-out;
+    }
+    .slide-enter {
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+    }
+    .slide-active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(51, 65, 85, 0.8);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="h-screen flex flex-col justify-between overflow-hidden select-none">
+
+  <!-- Header -->
+  <header class="bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between z-30">
+    <div class="flex items-center space-x-2">
+      <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-base border border-emerald-500/30">
+        <i class="fa-solid fa-leaf"></i>
+      </div>
+      <h1 class="text-sm md:text-base font-bold text-slate-100 heading-font truncate max-w-[180px] md:max-w-none">
+        Биологийн олон янз байдал
+      </h1>
+    </div>
+
+    <div class="flex items-center space-x-2">
+      <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-800 text-emerald-400 border border-slate-700" id="slide-counter">
+        1 / 25
+      </span>
+      <button onclick="toggleSidebar()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+        <i class="fa-solid fa-list-ul text-sm"></i>
+      </button>
+      <button onclick="toggleFullscreen()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+        <i class="fa-solid fa-expand text-sm"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Progress Bar -->
+  <div class="w-full bg-slate-800 h-1 z-30">
+    <div id="progress-bar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-1 transition-all duration-300" style="width: 4%;"></div>
+  </div>
+
+  <!-- Main Slide Canvas -->
+  <main class="flex-1 relative flex items-center justify-center p-3 md:p-6 z-10 overflow-hidden" id="main-touch-area">
+    <div id="slide-container" class="w-full max-w-4xl h-full max-h-[600px] bg-slate-900/90 border border-slate-800 rounded-2xl p-4 md:p-8 shadow-2xl flex flex-col justify-between backdrop-blur-sm relative overflow-y-auto custom-scrollbar slide-card slide-active">
+      <!-- Slide Content -->
+    </div>
+
+    <!-- Sidebar Drawer -->
+    <div id="sidebar" class="fixed right-0 top-0 bottom-0 w-72 md:w-80 bg-slate-900 border-l border-slate-800 z-50 transform translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <h3 class="font-bold text-slate-200 heading-font text-sm">Слайдуудын жагсаалт</h3>
+        <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white text-base">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar" id="sidebar-list"></div>
+    </div>
+  </main>
+
+  <!-- Footer Controls (z-40 хийж Netlify-ийн логоноос дээш гаргасан) -->
+  <footer class="bg-slate-900/95 backdrop-blur border-t border-slate-800 px-4 py-3 flex items-center justify-between z-40 relative">
+    <button id="prev-btn" onclick="prevSlide()" class="px-4 py-2.5 rounded-xl bg-slate-800 active:bg-slate-700 text-slate-200 text-xs md:text-sm font-semibold flex items-center space-x-2 transition disabled:opacity-30 disabled:cursor-not-allowed">
+      <i class="fa-solid fa-arrow-left"></i>
+      <span>Өмнөх</span>
+    </button>
+
+    <div class="flex items-center space-x-2">
+      <select id="slide-select" onchange="goToSlide(parseInt(this.value))" class="bg-slate-800 text-slate-200 border border-slate-700 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-500 max-w-[140px] md:max-w-none">
+      </select>
+    </div>
+
+    <button id="next-btn" onclick="nextSlide()" class="px-5 py-2.5 rounded-xl bg-emerald-600 active:bg-emerald-500 text-white text-xs md:text-sm font-bold flex items-center space-x-2 transition shadow-lg shadow-emerald-900/40">
+      <span>Дараах</span>
+      <i class="fa-solid fa-arrow-right"></i>
+    </button>
+  </footer>
+
+  <!-- Script & Slides Data -->
+  <script>
+    const slidesData = [
+      {
+        id: 1,
+        tag: "ЭХЛЭЛ",
+        title: "",
+        subtitle: "",
+        content: `
+          <div class="flex-1 flex flex-col justify-center items-center text-center space-y-6 my-auto">
+            <div class="w-20 h-20 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-4xl shadow-2xl">
+              <i class="fa-solid fa-leaf"></i>
+            </div>
+            <h1 class="text-2xl md:text-5xl font-extrabold text-white leading-tight heading-font tracking-wide">
+              Биологийн олон янз байдал
+            </h1>
+            <p class="text-xs text-slate-400">Утаснаас үзэж байвал зүүн/баруун тийш чирж слайдыг шилжүүлж болно</p>
+          </div>
+        `
+      },
+      {
+        id: 2,
+        tag: "ҮНДСЭН ОЙЛГОЛТ",
+        title: "Биологийн олон янз байдал гэж юу вэ?",
+        subtitle: "Эх дэлхий дээрх амьдралын сүлжээ",
+        content: `
+          <div class="grid md:grid-cols-2 gap-4 items-center flex-1 my-auto">
+            <div class="space-y-3">
+              <p class="text-slate-300 leading-relaxed text-xs md:text-sm">
+                <strong class="text-emerald-400">Биологийн олон янз байдал</strong> гэдэг нь дэлхий дээрх амьд организмын олон төрөл, тэдгээрийн удамшлын ялгаа болон амьдрах орчны олон янз байдлыг хэлнэ.
+              </p>
+              <ul class="space-y-2 text-slate-300 text-xs">
+                <li class="flex items-start"><i class="fa-solid fa-check text-emerald-400 mt-0.5 mr-2"></i> Амьтан, ургамал, мөөг, бичил биетэн багтана.</li>
+                <li class="flex items-start"><i class="fa-solid fa-check text-emerald-400 mt-0.5 mr-2"></i> Ой, тал хээр, цөл, нуур гол мөрнийг хамарна.</li>
+                <li class="flex items-start"><i class="fa-solid fa-check text-emerald-400 mt-0.5 mr-2"></i> Байгалийн тогтвортой байдлын үндэс юм.</li>
+              </ul>
+            </div>
+            <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/50 space-y-2 text-center">
+              <div class="text-3xl text-emerald-400 mb-1"><i class="fa-solid fa-tree"></i></div>
+              <h4 class="font-bold text-white text-sm">Амьдралын суурь</h4>
+              <p class="text-[11px] text-slate-400">Агаар, цэвэр ус, хүнс тэжээлийг тэнцвэртэй хангахад чухал үүрэгтэй.</p>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 3,
+        tag: "ТҮВШИН",
+        title: "Биологийн олон янз байдлын 3 түвшин",
+        subtitle: "Генетик, зүйл болон экосистем",
+        content: `
+          <div class="grid md:grid-cols-3 gap-3 flex-1 my-auto">
+            <div class="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700 flex flex-col justify-between">
+              <div>
+                <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold mb-2 text-xs">1</div>
+                <h4 class="font-bold text-white text-xs md:text-sm mb-1">Генетик түвшин</h4>
+                <p class="text-[11px] text-slate-400 leading-relaxed">Нэг зүйлийн бодгалиудын удамшлын ялгаа.</p>
+              </div>
+              <span class="text-[10px] text-blue-400 mt-2 font-bold uppercase">Удамшил</span>
+            </div>
+            <div class="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700 flex flex-col justify-between">
+              <div>
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold mb-2 text-xs">2</div>
+                <h4 class="font-bold text-white text-xs md:text-sm mb-1">Зүйлийн түвшин</h4>
+                <p class="text-[11px] text-slate-400 leading-relaxed">Нутаг дэвсгэр дэх өөр өөр зүйл амьтан, ургамал.</p>
+              </div>
+              <span class="text-[10px] text-emerald-400 mt-2 font-bold uppercase">Төрөл зүйл</span>
+            </div>
+            <div class="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700 flex flex-col justify-between">
+              <div>
+                <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold mb-2 text-xs">3</div>
+                <h4 class="font-bold text-white text-xs md:text-sm mb-1">Экосистемийн түвшин</h4>
+                <p class="text-[11px] text-slate-400 leading-relaxed">Амьд организмууд ба амьдрах орчны харилцан үйлчлэл.</p>
+              </div>
+              <span class="text-[10px] text-amber-400 mt-2 font-bold uppercase">Амьдрах орчин</span>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 4,
+        tag: "ГЕНЕТИК",
+        title: "Генетикийн олон янз байдал",
+        subtitle: "Дасан зохицох ба тэсвэрлэх чадвар",
+        content: `
+          <div class="space-y-3 flex-1 my-auto">
+            <p class="text-slate-300 text-xs md:text-sm leading-relaxed">
+              Нэг зүйлийн адил амьтдын доторх генийн сангийн ялгааг хэлнэ. Энэ нь орчин болон өвчинд дасан зохицоход чухал.
+            </p>
+            <div class="grid md:grid-cols-2 gap-3">
+              <div class="bg-slate-800/50 p-3.5 rounded-xl border border-slate-700">
+                <h5 class="font-bold text-emerald-400 text-xs mb-1"><i class="fa-solid fa-dog mr-1"></i>Жишээ: Нохой</h5>
+                <p class="text-[11px] text-slate-400">Ижил зүйл амьтан боловч хэмжээ, үсний өнгө, зан аашаар ялгаатай.</p>
+              </div>
+              <div class="bg-slate-800/50 p-3.5 rounded-xl border border-slate-700">
+                <h5 class="font-bold text-emerald-400 text-xs mb-1"><i class="fa-solid fa-wheat-awn mr-1"></i>Жишээ: Ургамал</h5>
+                <p class="text-[11px] text-slate-400">Улаан буудайн сортууд ган болон хүйтэнд тэсвэрлэх чадвараар ялгагдана.</p>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 5,
+        tag: "ЗҮЙЛҮҮД",
+        title: "Зүйлийн олон янз байдал",
+        subtitle: "Байгалийн баялаг ба зүйлүүдийн хамаарал",
+        content: `
+          <div class="space-y-3 flex-1 my-auto">
+            <p class="text-slate-300 text-xs md:text-sm">
+              Тодорхой нутаг дэвсгэрт амьдарч буй амьтан, ургамал, мөөг, бичил биетний баялаг байдал юм.
+            </p>
+            <div class="bg-slate-800/40 p-3.5 rounded-xl border border-slate-700">
+              <h5 class="font-bold text-white text-xs mb-2">Монгол орны төлөөлөгчид:</h5>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-[11px]">
+                <div class="bg-slate-800 p-2 rounded border border-slate-700/50 text-slate-300"><i class="fa-solid fa-paw text-emerald-400 mr-1.5"></i>Аргаль, янгир</div>
+                <div class="bg-slate-800 p-2 rounded border border-slate-700/50 text-slate-300"><i class="fa-solid fa-cat text-emerald-400 mr-1.5"></i>Цоохор ирвэс</div>
+                <div class="bg-slate-800 p-2 rounded border border-slate-700/50 text-slate-300"><i class="fa-solid fa-horse text-emerald-400 mr-1.5"></i>Хулан, тахь</div>
+                <div class="bg-slate-800 p-2 rounded border border-slate-700/50 text-slate-300"><i class="fa-solid fa-tree text-emerald-400 mr-1.5"></i>Шинэс, заг</div>
+                <div class="bg-slate-800 p-2 rounded border border-slate-700/50 text-slate-300"><i class="fa-solid fa-crow text-emerald-400 mr-1.5"></i>Шонхор, тас</div>
+                <div class="bg-slate-800 p-2 rounded border border-slate-700/50 text-slate-300"><i class="fa-solid fa-fish text-emerald-400 mr-1.5"></i>Тул, зэвэг</div>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 6,
+        tag: "ЭКОСИСТЕМ",
+        title: "Экосистемийн олон янз байдал",
+        subtitle: "Амьдрах орчны цогцолбор",
+        content: `
+          <div class="space-y-3 flex-1 my-auto">
+            <p class="text-slate-300 text-xs md:text-sm">
+              Экосистем бүр өөрийн гэсэн өвөрмөц ургамал, амьтан, уур амьсгалтай байдаг.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+              <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700">
+                <span class="font-bold text-emerald-400 text-xs block mb-0.5">Ойн экосистем</span>
+                <p class="text-[11px] text-slate-400">Мод ургамал, хүчилтөрөгч, усны эх үүсвэр.</p>
+              </div>
+              <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700">
+                <span class="font-bold text-amber-400 text-xs block mb-0.5">Хээрийн экосистем</span>
+                <p class="text-[11px] text-slate-400">Өвсөрхөг ургамал ба туруутан амьтдын нутаг.</p>
+              </div>
+              <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700">
+                <span class="font-bold text-orange-400 text-xs block mb-0.5">Цөлийн экосистем</span>
+                <p class="text-[11px] text-slate-400">Хуурай эрс тэс уур амьсгалтай орчин.</p>
+              </div>
+              <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700">
+                <span class="font-bold text-blue-400 text-xs block mb-0.5">Усны экосистем</span>
+                <p class="text-[11px] text-slate-400">Гол мөрөн, нуур, намгархаг газар.</p>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 7,
+        tag: "ТЭНЦВЭР",
+        title: "Байгалийн тэнцвэр ба хүнсний хэлхээ",
+        subtitle: "Экосистемийн амьдралын эргэлт",
+        content: `
+          <div class="space-y-3 flex-1 my-auto">
+            <p class="text-slate-300 text-xs md:text-sm">
+              Амьд организм бүр экосистемд тодорхой үүрэг гүйцэтгэнэ. Нэг зүйл цөөрөхөд бусаддаа нөлөөлнө.
+            </p>
+            <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700 space-y-2 text-xs">
+              <div class="flex items-center space-x-2">
+                <span class="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 font-bold rounded text-[10px]">Үйлдвэрлэгч</span>
+                <span class="text-slate-300">Ургамал (Нарны энергиэр органик бодис үүсгэгч)</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="px-2 py-0.5 bg-amber-500/20 text-amber-400 font-bold rounded text-[10px]">Хэрэглэгч</span>
+                <span class="text-slate-300">Өвсөн тэжээлтэн ба махчин амьтад</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="px-2 py-0.5 bg-purple-500/20 text-purple-400 font-bold rounded text-[10px]">Задлагч</span>
+                <span class="text-slate-300">Мөөг, бактери (Органик үлдэгдлийг задрагч)</span>
+              </div>
+            </div>
+            <div class="p-2 bg-slate-900 rounded-lg text-center text-xs text-emerald-400 font-mono border border-slate-800">
+              Өвс ➔ Царцаа ➔ Шувуу ➔ Махчин шувуу
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 8,
+        tag: "АЧ ХОЛБОГДОЛ",
+        title: "Биологийн олон янз байдлын ач холбогдол",
+        subtitle: "Хүн төрөлхтний оршин тогтнох үндэс",
+        content: `
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 flex-1 my-auto text-xs">
+            <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700">
+              <i class="fa-solid fa-bowl-food text-emerald-400 text-base mb-1"></i>
+              <h5 class="font-bold text-white mb-0.5">Хүнсний эх үүсвэр</h5>
+              <p class="text-slate-400 text-[11px]">Бидний идэж буй хоол хүнс, жимс, тариа байгалиас гаралтай.</p>
+            </div>
+            <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700">
+              <i class="fa-solid fa-pills text-blue-400 text-base mb-1"></i>
+              <h5 class="font-bold text-white mb-0.5">Эмийн бодис</h5>
+              <p class="text-slate-400 text-[11px]">Эм тарианы ихэнх хэсгийг байгалийн ургамал бодисоос авдаг.</p>
+            </div>
+            <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700">
+              <i class="fa-solid fa-wind text-teal-400 text-base mb-1"></i>
+              <h5 class="font-bold text-white mb-0.5">Уур амьсгалын зохицуулалт</h5>
+              <p class="text-slate-400 text-[11px]">Ургамал нь нүүрстөрөгчийг зааглаж агаарыг цэвэршүүлнэ.</p>
+            </div>
+            <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700">
+              <i class="fa-solid fa-droplet text-cyan-400 text-base mb-1"></i>
+              <h5 class="font-bold text-white mb-0.5">Цэвэр усны нөөц</h5>
+              <p class="text-slate-400 text-[11px]">Экосистем нь цэвэр усны нөөцийг тэнцвэртэй хадгална.</p>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 9,
+        tag: "ҮЙЛЧИЛГЭЭ",
+        title: "Экосистемийн үйлчилгээ",
+        subtitle: "Байгалиас бидэнд үзүүлж буй тусламж",
+        content: `
+          <div class="space-y-2 flex-1 my-auto text-xs">
+            <div class="p-2 bg-slate-800/80 rounded-lg border-l-4 border-emerald-500">
+              <strong class="text-white block">1. Хангамжийн үйлчилгээ:</strong>
+              <span class="text-slate-400 text-[11px]">Хоол хүнс, цэвэр ус, мод, эмийн ургамал.</span>
+            </div>
+            <div class="p-2 bg-slate-800/80 rounded-lg border-l-4 border-blue-500">
+              <strong class="text-white block">2. Зохицуулах үйлчилгээ:</strong>
+              <span class="text-slate-400 text-[11px]">Үерийн эрсдэлийг бууруулах, тоос хүртээх.</span>
+            </div>
+            <div class="p-2 bg-slate-800/80 rounded-lg border-l-4 border-amber-500">
+              <strong class="text-white block">3. Дэмжих үйлчилгээ:</strong>
+              <span class="text-slate-400 text-[11px]">Хөрс үүсэх, шим бодисын эргэлт.</span>
+            </div>
+            <div class="p-2 bg-slate-800/80 rounded-lg border-l-4 border-purple-500">
+              <strong class="text-white block">4. Соёлын үйлчилгээ:</strong>
+              <span class="text-slate-400 text-[11px]">Аялал жуулчлал, амралт, гоо зүйн таашаал.</span>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 10,
+        tag: "МОНГОЛ ОРОН",
+        title: "Монгол орны биологийн олон янз байдал",
+        subtitle: "Өргөн уудам нутаг ба эрс тэс уур амьсгал",
+        content: `
+          <div class="space-y-3 flex-1 my-auto">
+            <p class="text-slate-300 text-xs md:text-sm">
+              Монгол Улс нь өндөр уулс, ойт хээр, тал хээр, говь цөл хосолсон өвөрмөц бүс нутаг юм.
+            </p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-center text-xs">
+              <div class="p-2 bg-slate-800 rounded-lg border border-slate-700">
+                <i class="fa-solid fa-mountain text-slate-300 mb-1"></i>
+                <span class="block font-bold text-white text-[11px]">Өндөр уулс</span>
+                <span class="text-[10px] text-slate-400">Алтай, Хангай</span>
+              </div>
+              <div class="p-2 bg-slate-800 rounded-lg border border-slate-700">
+                <div class="text-emerald-400 mb-1"><i class="fa-solid fa-tree"></i></div>
+                <span class="block font-bold text-white text-[11px]">Ойт хээр</span>
+                <span class="text-[10px] text-slate-400">Баялаг ургамал</span>
+              </div>
+              <div class="p-2 bg-slate-800 rounded-lg border border-slate-700">
+                <div class="text-amber-400 mb-1"><i class="fa-solid fa-compass"></i></div>
+                <span class="block font-bold text-white text-[11px]">Тал хээр</span>
+                <span class="text-[10px] text-slate-400">Уудам бэлчээр</span>
+              </div>
+              <div class="p-2 bg-slate-800 rounded-lg border border-slate-700">
+                <div class="text-orange-400 mb-1"><i class="fa-solid fa-sun"></i></div>
+                <span class="block font-bold text-white text-[11px]">Говь цөл</span>
+                <span class="text-[10px] text-slate-400">Өвөрмөц орчин</span>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 11,
+        tag: "ХОВОР АМЬТАД",
+        title: "Монгол орны ховор амьтад",
+        subtitle: "Дэлхийн хэмжээнд хамгаалах шаардлагатай баялаг",
+        content: `
+          <div class="space-y-2 flex-1 my-auto text-xs">
+            <div class="p-2 bg-slate-800/60 rounded-lg border border-slate-700 flex items-center space-x-2.5">
+              <div class="w-6 h-6 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-[11px]">1</div>
+              <div>
+                <strong class="text-white text-[11px]">Цоохор ирвэс:</strong>
+                <span class="text-slate-400 text-[10px]"> Өндөр уулын махчин амьтан.</span>
+              </div>
+            </div>
+            <div class="p-2 bg-slate-800/60 rounded-lg border border-slate-700 flex items-center space-x-2.5">
+              <div class="w-6 h-6 rounded bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[11px]">2</div>
+              <div>
+                <strong class="text-white text-[11px]">Тахь:</strong>
+                <span class="text-slate-400 text-[10px]"> Дэлхийн сүүлчийн зэрлэг адуу.</span>
+              </div>
+            </div>
+            <div class="p-2 bg-slate-800/60 rounded-lg border border-slate-700 flex items-center space-x-2.5">
+              <div class="w-6 h-6 rounded bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold text-[11px]">3</div>
+              <div>
+                <strong class="text-white text-[11px]">Мазаалай:</strong>
+                <span class="text-slate-400 text-[10px]"> Говийн нэн ховордсон баавгай.</span>
+              </div>
+            </div>
+            <div class="p-2 bg-slate-800/60 rounded-lg border border-slate-700 flex items-center space-x-2.5">
+              <div class="w-6 h-6 rounded bg-yellow-500/20 text-yellow-400 flex items-center justify-center font-bold text-[11px]">4</div>
+              <div>
+                <strong class="text-white text-[11px]">Хавтгай & Бөхөн:</strong>
+                <span class="text-slate-400 text-[10px]"> Говь цөлийн ховор туруутан амьтад.</span>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 12,
+        tag: "УРГАМАЛ",
+        title: "Монгол орны ургамлын олон янз байдал",
+        subtitle: "3100 гаруй зүйлийн дээд ургамал",
+        content: `
+          <div class="space-y-3 flex-1 my-auto">
+            <p class="text-slate-300 text-xs">
+              Монгол орны ургамал нь хөрс хамгаалах, бэлчээр болох, эм тангийн түүхий эд болох ач холбогдолтой.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
+              <div class="p-2.5 bg-slate-800 rounded-lg border border-slate-700">
+                <span class="font-bold text-emerald-400 block mb-0.5 text-[11px]">Ойн ургамал</span>
+                <p class="text-slate-400 text-[10px]">Шинэс, хуш, нарс, хус моднууд.</p>
+              </div>
+              <div class="p-2.5 bg-slate-800 rounded-lg border border-slate-700">
+                <span class="font-bold text-amber-400 block mb-0.5 text-[11px]">Хээрийн ургамал</span>
+                <p class="text-slate-400 text-[10px]">Хялгана, таана, хялганат өвс.</p>
+              </div>
+              <div class="p-2.5 bg-slate-800 rounded-lg border border-slate-700">
+                <span class="font-bold text-orange-400 block mb-0.5 text-[11px]">Говийн ургамал</span>
+                <p class="text-slate-400 text-[10px]">Заг, баглуур, суль, гоёо.</p>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 13,
+        tag: "ШУВУУ БА УС",
+        title: "Шувуу ба усны амьтдын олон янз байдал",
+        subtitle: "Нүүдлийн зам ба цэнгэг усны организмууд",
+        content: `
+          <div class="space-y-3 flex-1 my-auto text-xs">
+            <div class="grid md:grid-cols-2 gap-2.5">
+              <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700">
+                <h5 class="font-bold text-blue-400 mb-1 text-[11px]"><i class="fa-solid fa-crow mr-1"></i>Нүүдлийн шувууд</h5>
+                <p class="text-slate-300 text-[10px] mb-1">Монголын нуур, намгархаг газар нь шувуудын чухал зогсоол болдог.</p>
+                <span class="text-slate-400 text-[10px]">• Цэн хорхой, хун, хотон, бүргэд.</span>
+              </div>
+              <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700">
+                <h5 class="font-bold text-cyan-400 mb-1 text-[11px]"><i class="fa-solid fa-fish mr-1"></i>Усны организмууд</h5>
+                <p class="text-slate-300 text-[10px] mb-1">Цэнгэг уст гол мөрөнд ховор загаснууд амьдардаг.</p>
+                <span class="text-slate-400 text-[10px]">• Дэлхийд том цэнгэг усны загас Тул.</span>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 14,
+        tag: "АЮУЛ НҮҮРЛЭХ НЬ",
+        title: "Биологийн олон янз байдалд учрах аюул",
+        subtitle: "Буурах гол хүчин зүйлс",
+        content: `
+          <div class="space-y-2 flex-1 my-auto text-xs">
+            <div class="p-2 bg-red-500/10 border border-red-500/30 rounded-lg text-red-300 font-semibold text-[10px]">
+              Хүний үйл ажиллагаанаас шалтгаалан зүйлүүд устах аюулд хүрч байна.
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="bg-slate-800 p-2 rounded-lg border border-slate-700">
+                <strong class="text-white block mb-0.5 text-[11px]">1. Орчны сүйдэл</strong>
+                <p class="text-slate-400 text-[10px]">Ойн сүүл, газар тариалан, уул уурхай.</p>
+              </div>
+              <div class="bg-slate-800 p-2 rounded-lg border border-slate-700">
+                <strong class="text-white block mb-0.5 text-[11px]">2. Хэт ашиглалт</strong>
+                <p class="text-slate-400 text-[10px]">Бэлчээрийн даац хэтрэх, мод бэлтгэл.</p>
+              </div>
+              <div class="bg-slate-800 p-2 rounded-lg border border-slate-700">
+                <strong class="text-white block mb-0.5 text-[11px]">3. Уур амьсгал</strong>
+                <p class="text-slate-400 text-[10px]">Дэлхийн дулаарал, ган, зуд.</p>
+              </div>
+              <div class="bg-slate-800 p-2 rounded-lg border border-slate-700">
+                <strong class="text-white block mb-0.5 text-[11px]">4. Хууль бус агнуур</strong>
+                <p class="text-slate-400 text-[10px]">Ашиг хонжоо хайсан агнуур.</p>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 15,
+        tag: "ХҮНИЙ НӨЛӨӨ",
+        title: "Хүний үйл ажиллагааны нөлөө",
+        subtitle: "Сөрөг ба эерэг нөлөөллүүд",
+        content: `
+          <div class="grid md:grid-cols-2 gap-2.5 flex-1 my-auto text-xs">
+            <div class="bg-red-950/20 p-3 rounded-xl border border-red-900/40">
+              <h5 class="font-bold text-red-400 mb-1 text-[11px]"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Сөрөг нөлөө</h5>
+              <ul class="space-y-1 text-slate-300 text-[10px]">
+                <li>• Уул уурхайн улмаас газар эвдрэх</li>
+                <li>• Бэлчээрийн талбай доройтох</li>
+                <li>• Хог хаягдал ба бохирдол</li>
+                <li>• Хууль бус ан агнуур</li>
+              </ul>
+            </div>
+            <div class="bg-emerald-950/20 p-3 rounded-xl border border-emerald-900/40">
+              <h5 class="font-bold text-emerald-400 mb-1 text-[11px]"><i class="fa-solid fa-hands-holding-circle mr-1"></i> Эерэг нөлөө</h5>
+              <ul class="space-y-1 text-slate-300 text-[10px]">
+                <li>• Тусгай хамгаалалттай газар байгуулах</li>
+                <li>• Мод тарих ба нөхөн сэргээлт</li>
+                <li>• Амьтдыг хамгаалах хууль хэрэгжүүлэх</li>
+                <li>• Байгаль хамгаалалтын боловсрол</li>
+              </ul>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 16,
+        tag: "УУР АМЬСГАЛ",
+        title: "Уур амьсгалын өөрчлөлтийн нөлөө",
+        subtitle: "Дэлхийн дулаарал ба дасан зохицол",
+        content: `
+          <div class="space-y-2.5 flex-1 my-auto text-xs">
+            <p class="text-slate-300 text-[11px]">
+              Температур нэмэгдэж, хур тунадас өөрчлөгдөх нь амьдрах орчныг хувиргаж байна.
+            </p>
+            <div class="bg-slate-800/80 p-2.5 rounded-lg border border-slate-700 space-y-0.5">
+              <div class="text-amber-400 font-bold text-[11px]"><i class="fa-solid fa-temperature-arrow-up mr-1"></i> Усны нөөцийн багасалт:</div>
+              <p class="text-slate-400 text-[10px]">Нуур ширгэж, усны ба нүүдлийн шувуудын орчин хумигдана.</p>
+            </div>
+            <div class="bg-slate-800/80 p-2.5 rounded-lg border border-slate-700 space-y-0.5">
+              <div class="text-red-400 font-bold text-[11px]"><i class="fa-solid fa-cloud-sun-rain mr-1"></i> Цаг агаарын аюултай үзэгдэл:</div>
+              <p class="text-slate-400 text-[10px]">Ган болон зуд нь зэрлэг амьтдын тоог огцом цөөрүүлдэг.</p>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 17,
+        tag: "БОХИРДОЛ",
+        title: "Бохирдол ба биологийн олон янз байдал",
+        subtitle: "Агаар, ус, хөрсний бохирдол",
+        content: `
+          <div class="space-y-2.5 flex-1 my-auto text-xs">
+            <p class="text-slate-300 text-[11px]">
+              Орчны бохирдол нь организмын өсөлт, үржилд сөргөөр нөлөөлдөг.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <div class="p-2 bg-slate-800 rounded-lg border border-slate-700">
+                <i class="fa-solid fa-bottle-droplet text-red-400 text-sm mb-0.5"></i>
+                <strong class="text-white block text-[11px]">Пластик ба хог</strong>
+                <p class="text-slate-400 text-[10px]">Амьтад хуванцар залгих, хогонд орооцолдох.</p>
+              </div>
+              <div class="p-2 bg-slate-800 rounded-lg border border-slate-700">
+                <i class="fa-solid fa-flask text-amber-400 text-sm mb-0.5"></i>
+                <strong class="text-white block text-[11px]">Химийн бодис</strong>
+                <p class="text-slate-400 text-[10px]">Пестицид, уул уурхайн хаягдал.</p>
+              </div>
+              <div class="p-2 bg-slate-800 rounded-lg border border-slate-700">
+                <i class="fa-solid fa-smog text-slate-400 text-sm mb-0.5"></i>
+                <strong class="text-white block text-[11px]">Агаарын бохирдол</strong>
+                <p class="text-slate-400 text-[10px]">Ургамлын фотосинтезд сөргөөр нөлөөлөх.</p>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 18,
+        tag: "УСТАХ АЮУЛ",
+        title: "Устах аюулд орсон зүйлүүд",
+        subtitle: "IUCN Улаан дансны үнэлгээ",
+        content: `
+          <div class="space-y-3 flex-1 my-auto">
+            <p class="text-slate-300 text-xs">
+              Амьтан, ургамлын устах эрсдэлийг Улаан дансны ангиллаар үнэлдэг.
+            </p>
+            <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 space-y-2 text-xs">
+              <div class="flex justify-between items-center text-red-400 font-bold text-[11px]">
+                <span>Нэн ховор</span>
+                <span>Мазаалай, Хавтгай</span>
+              </div>
+              <div class="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-red-500 h-full w-11/12"></div>
+              </div>
+              <div class="flex justify-between items-center text-amber-400 font-bold pt-1 text-[11px]">
+                <span>Ховор</span>
+                <span>Цоохор ирвэс, Бөхөн</span>
+              </div>
+              <div class="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-amber-500 h-full w-3/4"></div>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 19,
+        tag: "ТУСГАЙ ХАМГААЛАЛТ",
+        title: "Тусгай хамгаалалттай газар нутаг",
+        subtitle: "Экосистемийг иж бүрнээр хамгаалах",
+        content: `
+          <div class="space-y-2 flex-1 my-auto text-xs">
+            <p class="text-slate-300 text-[11px]">Монгол Улс тодорхой нутаг дэвсгэрийг тусгай хамгаалалтад авдаг.</p>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="p-2 bg-slate-800 rounded-lg border border-slate-700">
+                <strong class="text-emerald-400 block text-[11px]">Хустайн нуруу</strong>
+                <p class="text-slate-400 text-[10px]">Тахь сэргээн нутагшуулсан бүс.</p>
+              </div>
+              <div class="p-2 bg-slate-800 rounded-lg border border-slate-700">
+                <strong class="text-emerald-400 block text-[11px]">Говийн Дархан Газар</strong>
+                <p class="text-slate-400 text-[10px]">Мазаалай, хавтгайн амьдрах орчин.</p>
+              </div>
+              <div class="p-2 bg-slate-800 rounded-lg border border-slate-700">
+                <strong class="text-emerald-400 block text-[11px]">Алтай Таван Богд</strong>
+                <p class="text-slate-400 text-[10px]">Цоохор ирвэсийн өндөр уулын бүс.</p>
+              </div>
+              <div class="p-2 bg-slate-800 rounded-lg border border-slate-700">
+                <strong class="text-emerald-400 block text-[11px]">Хөвсгөл нуур</strong>
+                <p class="text-slate-400 text-[10px]">Цэнгэг ус ба тайгын экосистем.</p>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 20,
+        tag: "ХАМГААЛАХ АРГА",
+        title: "Биологийн олон янз байдлыг хамгаалах арга",
+        subtitle: "In-situ ба Ex-situ хамгаалалт",
+        content: `
+          <div class="grid md:grid-cols-2 gap-2.5 flex-1 my-auto text-xs">
+            <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 space-y-1">
+              <h5 class="font-bold text-emerald-400 text-[11px]">Байгаль дээр нь хамгаалах (In-situ)</h5>
+              <p class="text-slate-300 text-[10px]">Өөрийнх нь унаган амьдрах орчинд нь хадгалах.</p>
+              <ul class="text-slate-400 text-[10px] space-y-0.5">
+                <li>• Тусгай хамгаалалттай газар нутаг</li>
+                <li>• Дорнод талын дархан газар</li>
+              </ul>
+            </div>
+            <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 space-y-1">
+              <h5 class="font-bold text-blue-400 text-[11px]">Байгалиас гадуур хамгаалах (Ex-situ)</h5>
+              <p class="text-slate-300 text-[10px]">Унаган орчноос нь гадуур авч үлдэх, үржүүлэх.</p>
+              <ul class="text-slate-400 text-[10px] space-y-0.5">
+                <li>• Ботаникийн цэцэрлэг, Үрийн сан</li>
+                <li>• Амьтны хүрээлэн, Үржүүлгийн газар</li>
+              </ul>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 21,
+        tag: "ИРГЭНИЙ ОРОЛЦОО",
+        title: "Иргэн бүрийн оролцоо",
+        subtitle: "Бид юу хийж чадах вэ?",
+        content: `
+          <div class="space-y-2 flex-1 my-auto text-xs">
+            <p class="text-slate-300 text-[11px]">Хүн бүрийн эерэг үйлдэл байгаль хамгаалахад чухал.</p>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="p-2 bg-slate-800 rounded-lg border border-slate-700 flex items-center space-x-2">
+                <i class="fa-solid fa-recycle text-emerald-400 text-xs"></i>
+                <span class="text-slate-300 text-[10px]">Хог хаягдлаа ангилах</span>
+              </div>
+              <div class="p-2 bg-slate-800 rounded-lg border border-slate-700 flex items-center space-x-2">
+                <i class="fa-solid fa-faucet-drip text-blue-400 text-xs"></i>
+                <span class="text-slate-300 text-[10px]">Ус, эрчим хүч хэмнэх</span>
+              </div>
+              <div class="p-2 bg-slate-800 rounded-lg border border-slate-700 flex items-center space-x-2">
+                <i class="fa-solid fa-tree text-teal-400 text-xs"></i>
+                <span class="text-slate-300 text-[10px]">Мод тарих, хамгаалах</span>
+              </div>
+              <div class="p-2 bg-slate-800 rounded-lg border border-slate-700 flex items-center space-x-2">
+                <i class="fa-solid fa-shield text-amber-400 text-xs"></i>
+                <span class="text-slate-300 text-[10px]">Хууль бус агнуураас татгалзах</span>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 22,
+        tag: "ОЛОН УЛС",
+        title: "Дэлхийн хэмжээнд хэрэгжүүлж буй хамгаалал",
+        subtitle: "Олон улсын конвенцууд",
+        content: `
+          <div class="space-y-2 flex-1 my-auto text-xs">
+            <div class="p-2 bg-slate-800/80 rounded-lg border border-slate-700">
+              <strong class="text-emerald-400 block text-[11px]">1. Конвенц (CBD)</strong>
+              <p class="text-slate-400 text-[10px]">Биологийн олон янз байдлыг хамгаалах олон улсын гэрээ.</p>
+            </div>
+            <div class="p-2 bg-slate-800/80 rounded-lg border border-slate-700">
+              <strong class="text-blue-400 block text-[11px]">2. CITES Конвенц</strong>
+              <p class="text-slate-400 text-[10px]">Ховордсон амьтан, ургамлын худалдааг хориглох.</p>
+            </div>
+            <div class="p-2 bg-slate-800/80 rounded-lg border border-slate-700">
+              <strong class="text-amber-400 block text-[11px]">3. IUCN Улаан данс</strong>
+              <p class="text-slate-400 text-[10px]">Зүйлүүдийн устах эрсдэлийн судалгаа ба үнэлгээ.</p>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 23,
+        tag: "АМЖИЛТТАЙ ТҮҮХ",
+        title: "Амжилттай хамгааллын жишээ: Тахь",
+        subtitle: "Зэрлэг байгальд эргэн ирсэн түүх",
+        content: `
+          <div class="space-y-2.5 flex-1 my-auto text-xs">
+            <div class="bg-emerald-950/20 p-3 rounded-xl border border-emerald-800/40">
+              <h5 class="font-bold text-emerald-400 mb-1 text-[11px]"><i class="fa-solid fa-horse mr-1"></i>Тахь адуу</h5>
+              <p class="text-slate-300 leading-relaxed text-[10px] mb-2">
+                Тахь нь байгальд устсан байсан ч олон улсын хамтын ажиллагааны ачаар Монгол нутагтаа амжилттай сэргээн нутагшсан.
+              </p>
+              <div class="grid grid-cols-2 gap-2 text-slate-400 text-[10px]">
+                <div class="bg-slate-900 p-1.5 rounded">• Хустайн нуруу</div>
+                <div class="bg-slate-900 p-1.5 rounded">• Тахийн тал</div>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 24,
+        tag: "ДҮГНЭЛТ",
+        title: "Дүгнэлт",
+        subtitle: "Ирээдүйд үлдээх хариуцлага",
+        content: `
+          <div class="space-y-3 flex-1 my-auto text-xs text-center">
+            <div class="p-3.5 bg-slate-800/80 rounded-xl border border-slate-700 space-y-2">
+              <p class="text-slate-200 text-xs leading-relaxed">
+                Биологийн олон янз байдал нь эх дэлхийн амьдралын суурь бөгөөд бидний эрүүл мэнд, ирээдүйтэй холбоотой.
+              </p>
+              <div class="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-300 font-bold text-xs">
+                "Байгаль бол ирээдүй хойч үедээ үлдээх хариуцлага юм."
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 25,
+        tag: "ТӨГСГӨЛ",
+        title: "Анхаарал тавьсанд баярлалаа!",
+        subtitle: "Асуулт ба хариулт",
+        content: `
+          <div class="flex-1 flex flex-col justify-center items-center text-center space-y-3 my-auto">
+            <div class="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl border border-emerald-500/30">
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <h2 class="text-xl font-extrabold text-white heading-font">Танилцуулга дууслаа</h2>
+            <p class="text-slate-400 text-xs max-w-sm">
+              Байгаль дэлхийгээ хайрлан хамгаалж, биологийн олон янз байдлыг авч үлдэхэд хамтдаа хувь нэмэр оруулцгаая!
+            </p>
+            <span class="text-[11px] text-emerald-400 font-semibold px-3 py-1 bg-slate-800 rounded-full border border-slate-700">
+              Асуулт хариулт
+            </span>
+          </div>
+        `
+      }
+    ];
+
+    let currentSlide = 0;
+
+    function renderSlide(index) {
+      const slide = slidesData[index];
+      const container = document.getElementById('slide-container');
+
+      container.classList.remove('slide-active');
+      container.classList.add('slide-enter');
+
+      setTimeout(() => {
+        if (index === 0) {
+          container.innerHTML = `
+            ${slide.content}
+            <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-500">
+              <span>Биологийн олон янз байдал</span>
+              <span>1 / ${slidesData.length}</span>
+            </div>
+          `;
+        } else {
+          container.innerHTML = `
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-[9px] font-bold tracking-widest text-emerald-400 uppercase bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                  ${slide.tag}
+                </span>
+                <span class="text-[10px] text-slate-500">№ ${slide.id}</span>
+              </div>
+              <h3 class="text-base md:text-xl font-bold text-white heading-font">${slide.title}</h3>
+              <p class="text-[11px] text-slate-400 mt-0.5">${slide.subtitle}</p>
+            </div>
+            
+            ${slide.content}
+
+            <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-500">
+              <span>Биологийн олон янз байдал</span>
+              <span>${slide.id} / ${slidesData.length}</span>
+            </div>
+          `;
+        }
+
+        container.classList.remove('slide-enter');
+        container.classList.add('slide-active');
+      }, 80);
+
+      document.getElementById('slide-counter').innerText = `${index + 1} / ${slidesData.length}`;
+      document.getElementById('progress-bar').style.width = `${((index + 1) / slidesData.length) * 100}%`;
+
+      document.getElementById('prev-btn').disabled = index === 0;
+      document.getElementById('next-btn').disabled = index === slidesData.length - 1;
+
+      document.getElementById('slide-select').value = index;
+
+      updateSidebarActive(index);
+    }
+
+    function nextSlide() {
+      if (currentSlide < slidesData.length - 1) {
+        currentSlide++;
+        renderSlide(currentSlide);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        renderSlide(currentSlide);
+      }
+    }
+
+    function goToSlide(index) {
+      currentSlide = index;
+      renderSlide(currentSlide);
+    }
+
+    function initSidebar() {
+      const list = document.getElementById('sidebar-list');
+      const select = document.getElementById('slide-select');
+
+      slidesData.forEach((slide, idx) => {
+        const item = document.createElement('div');
+        item.className = `p-2 rounded-lg border text-xs cursor-pointer transition flex items-center justify-between sidebar-item-${idx}`;
+        item.onclick = () => {
+          goToSlide(idx);
+          toggleSidebar();
+        };
+        
+        const titleText = idx === 0 ? "Биологийн олон янз байдал" : slide.title;
+        item.innerHTML = `
+          <div class="truncate mr-2">
+            <span class="font-bold block text-slate-200">${idx + 1}. ${titleText}</span>
+            <span class="text-[9px] text-slate-400">${slide.tag}</span>
+          </div>
+        `;
+        list.appendChild(item);
+
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.innerText = `${idx + 1}. ${titleText}`;
+        select.appendChild(opt);
+      });
+    }
+
+    function updateSidebarActive(activeIndex) {
+      slidesData.forEach((_, idx) => {
+        const item = document.querySelector(`.sidebar-item-${idx}`);
+        if (item) {
+          if (idx === activeIndex) {
+            item.className = `p-2 rounded-lg border text-xs cursor-pointer transition flex items-center justify-between sidebar-item-${idx} bg-emerald-500/20 border-emerald-500/50 text-emerald-300`;
+          } else {
+            item.className = `p-2 rounded-lg border text-xs cursor-pointer transition flex items-center justify-between sidebar-item-${idx} bg-slate-800/50 border-slate-700/50 text-slate-300 active:bg-slate-800`;
+          }
+        }
+      });
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('translate-x-full');
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    // Утасны дэлгэц дээр хуруугаар чирж шилжүүлэх (Swipe Support)
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const mainArea = document.getElementById('main-touch-area');
+
+    mainArea.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, false);
+
+    mainArea.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    }, false);
+
+    function handleSwipe() {
+      if (touchEndX < touchStartX - 50) {
+        nextSlide(); // Зүүн тийш шудрахад дараагийн слайд
+      }
+      if (touchEndX > touchStartX + 50) {
+        prevSlide(); // Баруун тийш шудрахад өмнөх слайд
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'Space') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        prevSlide();
+      }
+    });
+
+    window.onload = () => {
+      initSidebar();
+      renderSlide(0);
+    };
+  </script>
+</body>
+</html>               
